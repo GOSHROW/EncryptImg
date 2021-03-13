@@ -117,7 +117,7 @@ class Encrypt:
                 image = self.confusez3(image)
             elif i == "z4":
                 image = self.confusez3(cv2.flip(image, 0))
-            cv2.imwrite("./confused" + str(idx) + ".jpg", image)
+            # cv2.imwrite("./confused" + str(idx) + ".jpg", image)
         return image
     
     def henon2DOut(self, xIn, yIn, outLen, b = 1.4, c = 0.3):
@@ -174,6 +174,8 @@ class Encrypt:
             toAppend = str(bin(perQ)[2:]).zfill(8)[::-1]
             perBits.append([int(i) for i in toAppend])
         keyBits = self.getKeyBits(self.henon2DOut(akgmInitial[0], akgmInitial[1], l))
+        # with open("keybits", "w+") as kbf:
+        #     kbf.write(str(keyBits))
         # print(np.array(perBits).shape, "  ", np.array(keyBits).shape)
         cipherbits = self.BNT3Layers(perBits, keyBits)
         encryptedImage = [0 for _ in range(len(cipherbits))]
@@ -208,6 +210,8 @@ class Encrypt:
         bEncrypted = self.diffusion(b, akgmInitial)
         gEncrypted = self.diffusion(g, akgmInitial)
         rEncrypted = self.diffusion(r, akgmInitial)
+        # with open("gcipher", "w+") as gcipher:
+        #     gcipher.write(str(gEncrypted))
         final = cv2.merge((bEncrypted, gEncrypted, rEncrypted))
         return final
         

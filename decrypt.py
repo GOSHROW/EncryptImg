@@ -32,8 +32,7 @@ class Decrypt:
             keyBits.append([int(i) for i in toAppend])
         return keyBits
     
-    def diffusionKeys(self, image):
-        l = len(image.ravel())
+    def diffusionKeys(self, l):
         akgmInitial = self.keys["akgm"]
         keyBits = self.getKeyBits(self.henon2DOut(float(akgmInitial[0]), float(akgmInitial[1]), l))
         return keyBits
@@ -42,11 +41,12 @@ class Decrypt:
         image = image.ravel()
         l = len(image)
         cipherbits = []
-        lenset = set()
+        # lenset = set()
         for c in range(l):
             toAppend = str(bin(image[c])[2:]).zfill(8)[::-1]
             cipherbits.append([int(a) for a in toAppend])
-            lenset.add(len(toAppend))
+            # lenset.add(len(toAppend))
+        # print(lenset)
         return cipherbits
 
     def getPermute(self, keyBits, cipherBits):
@@ -94,21 +94,25 @@ class Decrypt:
         b[:,:] = self.image[:,:,0]
         g[:,:] = self.image[:,:,1]
         r[:,:] = self.image[:,:,2]
-        bKeys = self.diffusionKeys(b)
-        gKeys = self.diffusionKeys(g)
-        rKeys = self.diffusionKeys(r)
+        # with open("gdecrypt", "w+") as gd:
+        #     gd.write(str(g))
+        Keys = self.diffusionKeys(len(b.ravel()))
+        # with open("keybitsDecrypt", "w+") as kbdf:
+        #     kbdf.write(str(Keys))
         bCipher = self.getCipherBits(b)
         gCipher = self.getCipherBits(g)
         rCipher = self.getCipherBits(r)
-        # print(np.array(bCipher).shape, np.array(bKeys).shape)
-        bPermute = self.getPermute(bKeys, bCipher)
-        gPermute = self.getPermute(gKeys, gCipher)
-        rPermute = self.getPermute(rKeys, rCipher)
-        return cv2.merge((rPermute, gPermute, bPermute))
+        # with open("gcipherdecrypt", "w+") as gcipherd:
+        #     gcipherd.write(str(gCipher))
+        # print(np.array(bCipher).shape, np.array(Keys).shape)
+        # bPermute = self.getPermute(Keys, bCipher)
+        # gPermute = self.getPermute(Keys, gCipher)
+        # rPermute = self.getPermute(Keys, rCipher)
+        # return cv2.merge((rPermute, gPermute, bPermute))
 
     def main(self):
         permutedImage = self.unify3()
-        cv2.imwrite("./permuted.jpg", permutedImage)
+        # cv2.imwrite("./permuted.jpg", permutedImage)
 
 decrypt = Decrypt("./encrypted.jpg", "./keys.txt", "./decrypted.jpg")
 decrypt.main()
