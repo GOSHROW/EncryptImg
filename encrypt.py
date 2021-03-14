@@ -68,6 +68,9 @@ class Encrypt:
         }
         with open('keys.txt', 'w+') as outfile:
             json.dump(keys, outfile)
+        # IF the outPath is using lossy compression, rather send out the text as is. 
+        # with open('encrypteeFinal', 'w+') as encryptText:
+        #     encryptText.write(str(self.image))
         cv2.imwrite(self.outPath, self.image)
 
     def confusez3(self, img):
@@ -197,6 +200,14 @@ class Encrypt:
             keyBits.append([int(i) for i in toAppend])
         return keyBits
 
+    def channelMerge(self, b, g, r):
+        shape = b.shape
+        retImg = [[[0, 0, 0] for i in range(shape[1])] for j in range(shape[0])]
+        for i in range(shape[0]):
+            for j in range(shape[1]):
+                retImg[i][j] = [b[i][j], g[i][j], r[i][j]]
+        return np.array(retImg)
+
     def diffusion3(self, image, akgmInitial):
         W, X, planes = image.shape
         b, g, r = np.zeros((W, X),np.uint8), np.zeros((W, X),np.uint8), np.zeros((W, X),np.uint8)
@@ -210,9 +221,7 @@ class Encrypt:
         bEncrypted = self.diffusion(b, akgmInitial)
         gEncrypted = self.diffusion(g, akgmInitial)
         rEncrypted = self.diffusion(r, akgmInitial)
-        # with open("gcipher", "w+") as gcipher:
-        #     gcipher.write(str(gEncrypted))
-        final = cv2.merge((bEncrypted, gEncrypted, rEncrypted))
+        final = self.channelMerge(bEncrypted, gEncrypted, rEncrypted)
         return final
         
     def main(self):
@@ -223,5 +232,5 @@ class Encrypt:
         self.image = self.diffusion3(confusedImage, akgmInitial)
         self.out(okgmInitial, akgmInitial)
 
-encrypted = Encrypt("./lena.jpg", "./encrypted.jpg")
+encrypted = Encrypt("./lena.jpg", "./encrypted.png")
 encrypted.main()
