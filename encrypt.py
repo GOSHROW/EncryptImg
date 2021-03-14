@@ -120,7 +120,7 @@ class Encrypt:
                 image = self.confusez3(image)
             elif i == "z4":
                 image = self.confusez3(cv2.flip(image, 0))
-            # cv2.imwrite("./confused" + str(idx) + ".jpg", image)
+            cv2.imwrite("./confused" + str(idx + 1) + ".png", image)
         return image
     
     def henon2DOut(self, xIn, yIn, outLen, b = 1.4, c = 0.3):
@@ -143,6 +143,8 @@ class Encrypt:
             keyBits[i] = [0] + keyBits[i]
         # print(np.array(perBits).shape, "  ", np.array(keyBits).shape)
         c1 = [[0 for i in range(9)] for j in range(l + 1)]
+        # with open("step3back", "a+") as ciphertxt:
+        #     ciphertxt.write(str(perBits))
         for q in range(1, l+1):
             for d in range(1, 9):
                 if d % 2 != 0:
@@ -150,6 +152,8 @@ class Encrypt:
                 else:
                     c1[q][d] = perBits[q][d - 1] ^ keyBits[q][d - 1]
         c2 = [[0 for i in range(9)] for j in range(l + 1)]
+        # with open("step2back", "a+") as ciphertxt:
+        #     ciphertxt.write(str(c1))
         for q in range(1, l+1):
             for d in range(1, 9):
                 if d in [1, 2, 5, 6]:
@@ -157,16 +161,21 @@ class Encrypt:
                 else:
                     c2[q][d] = c1[q][d - 2] ^ keyBits[q][d - 2]
         cipher = [[0 for i in range(9)] for j in range(l + 1)]
+        # with open("step1back", "a+") as ciphertxt:
+        #     ciphertxt.write(str(c2))
         for q in range(1, l+1):
             for d in range(1, 9):
                 if d <= 4:
                     cipher[q][d] = c2[q][d + 4] ^ keyBits[q][d + 4]
                 else:
                     cipher[q][d] = c2[q][d - 4] ^ keyBits[q][d - 4]
+        # with open("ciphertxtEncrypted", "a+") as ciphertxt:
+        #     ciphertxt.write(str(cipher))
+        # with open("keyEncrypt", "a+") as ciphertxt:
+        #     ciphertxt.write(str(keyBits))
         cipher = cipher[1:]
         for i in range(l):
             cipher[i] = cipher[i][1:]
-        # print(np.array(cipher).shape)
         return cipher
 
     def diffusion(self, image, akgmInitial):
@@ -177,9 +186,6 @@ class Encrypt:
             toAppend = str(bin(perQ)[2:]).zfill(8)[::-1]
             perBits.append([int(i) for i in toAppend])
         keyBits = self.getKeyBits(self.henon2DOut(akgmInitial[0], akgmInitial[1], l))
-        # with open("keybits", "w+") as kbf:
-        #     kbf.write(str(keyBits))
-        # print(np.array(perBits).shape, "  ", np.array(keyBits).shape)
         cipherbits = self.BNT3Layers(perBits, keyBits)
         encryptedImage = [0 for _ in range(len(cipherbits))]
         for pixel in range(len(cipherbits)):
@@ -215,12 +221,12 @@ class Encrypt:
         g[:,:] = image[:,:,1]
         r[:,:] = image[:,:,2]
         # print(b.shape, g.shape, r.shape)
-        # cv2.imwrite("./bout.jpg", b)
-        # cv2.imwrite("./gout.jpg", g)
-        # cv2.imwrite("./rout.jpg", r)
         bEncrypted = self.diffusion(b, akgmInitial)
         gEncrypted = self.diffusion(g, akgmInitial)
         rEncrypted = self.diffusion(r, akgmInitial)
+        # cv2.imwrite("./bout.png", bEncrypted)
+        # cv2.imwrite("./gout.png", gEncrypted)
+        # cv2.imwrite("./rout.png", rEncrypted)
         final = self.channelMerge(bEncrypted, gEncrypted, rEncrypted)
         return final
         

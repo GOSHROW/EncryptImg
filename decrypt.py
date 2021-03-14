@@ -1,6 +1,7 @@
 import cv2
 import json
 import numpy as np
+import copy
 
 class Decrypt:
 
@@ -49,8 +50,9 @@ class Decrypt:
         # print(lenset)
         return cipherbits
 
-    def getPermute(self, keyBits, cipherBits):
+    def getPermute(self, keybits, cipherBits):
         l = len(cipherBits)
+        keyBits = copy.deepcopy(keybits)
         # Padding 0s for 1 indexing
         cipherBits.insert(0, [0 for _ in range(8)])
         keyBits.insert(0, [0 for _ in range(8)])
@@ -58,27 +60,38 @@ class Decrypt:
         for i in range(l + 1):
             cipherBits[i] = [0] + cipherBits[i]
             keyBits[i] = [0] + keyBits[i]
+        # print(np.array(keyBits).shape)
         b1 = [[0 for i in range(9)] for j in range(l + 1)]
+        # with open("ciphertextDEcrypt", "a+") as cipherD:
+        #     cipherD.write(str(cipherBits))
+        # with open("keyDEcrypt", "a+") as cipherD:
+        #     cipherD.write(str(keyBits))
         for q in range(1, l+1):
             for d in range(1, 9):
                 if d <= 4:
-                    b1[q][d] = cipherBits[q][d + 4] ^ keyBits[q][d + 4]
+                    b1[q][d] = cipherBits[q][d + 4] ^ keyBits[q][d]
                 else:
-                    b1[q][d] = cipherBits[q][d - 4] ^ keyBits[q][d - 4]
+                    b1[q][d] = cipherBits[q][d - 4] ^ keyBits[q][d]
         b2 = [[0 for i in range(9)] for j in range(l + 1)]
+        # with open("step1backD", "a+") as ciphertxt:
+        #     ciphertxt.write(str(b1))
         for q in range(1, l+1):
             for d in range(1, 9):
                 if d in [1, 2, 5, 6]:
-                    b2[q][d] = b1[q][d + 2] ^ keyBits[q][d + 2]
+                    b2[q][d] = b1[q][d + 2] ^ keyBits[q][d]
                 else:
-                    b2[q][d] = b1[q][d - 2] ^ keyBits[q][d - 2]
+                    b2[q][d] = b1[q][d - 2] ^ keyBits[q][d]
         permute = [[0 for i in range(9)] for j in range(l + 1)]
+        # with open("step2backD", "a+") as ciphertxt:
+        #     ciphertxt.write(str(b2))
         for q in range(1, l+1):
             for d in range(1, 9):
                 if d % 2 != 0:
-                    permute[q][d] = b2[q][d + 1] ^ keyBits[q][d + 1] # TODO: Check Sign
+                    permute[q][d] = b2[q][d + 1] ^ keyBits[q][d] # TODO: Check Sign
                 else:
-                    permute[q][d] = b2[q][d - 1] ^ keyBits[q][d - 1]
+                    permute[q][d] = b2[q][d - 1] ^ keyBits[q][d]
+        # with open("step3backD", "a+") as ciphertxt:
+        #     ciphertxt.write(str(permute))
         permute = permute[1:]
         for i in range(l):
             permute[i] = permute[i][1:]
@@ -88,14 +101,15 @@ class Decrypt:
         permute = np.reshape(permute, (self.image.shape[0], self.image.shape[1]))
         return permute
     
-    def unify3(self):
+    def reverseDiffusion3(self):
         W, X, planes = self.image.shape
         b, g, r = np.zeros((W, X),np.uint8), np.zeros((W, X),np.uint8), np.zeros((W, X),np.uint8)
         b[:,:] = self.image[:,:,0]
         g[:,:] = self.image[:,:,1]
         r[:,:] = self.image[:,:,2]
-        # with open("gdecrypt", "w+") as gd:
-        #     gd.write(str(g))
+        # cv2.imwrite("./bIN.png", b)
+        # cv2.imwrite("./gIN.png", g)
+        # cv2.imwrite("./rIN.png", r)
         Keys = self.diffusionKeys(len(b.ravel()))
         # with open("keybitsDecrypt", "w+") as kbdf:
         #     kbdf.write(str(Keys))
@@ -105,14 +119,14 @@ class Decrypt:
         # with open("gcipherdecrypt", "w+") as gcipherd:
         #     gcipherd.write(str(gCipher))
         # print(np.array(bCipher).shape, np.array(Keys).shape)
-        # bPermute = self.getPermute(Keys, bCipher)
-        # gPermute = self.getPermute(Keys, gCipher)
-        # rPermute = self.getPermute(Keys, rCipher)
-        # return cv2.merge((rPermute, gPermute, bPermute))
+        bPermute = self.getPermute(Keys, bCipher)
+        gPermute = self.getPermute(Keys, gCipher)
+        rPermute = self.getPermute(Keys, rCipher)
+        return cv2.merge((bPermute, gPermute, rPermute))
 
     def main(self):
-        permutedImage = self.unify3()
-        # cv2.imwrite("./permuted.jpg", permutedImage)
+        permutedImage = self.reverseDiffusion3()
+        cv2.imwrite("./permuted.png", permutedImage)
 
-decrypt = Decrypt("./encrypted.jpg", "./keys.txt", "./decrypted.jpg")
+decrypt = Decrypt("./encrypted.png", "./keys.txt", "./decrypted.png")
 decrypt.main()
