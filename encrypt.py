@@ -5,10 +5,11 @@ import cv2
 import json
 
 class Encrypt:
-    def __init__(self, imagePath, outPath):
+    def __init__(self, imagePath, outImgPath, outKeysPath):
         self.image = cv2.imread(imagePath, 1)
         self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
-        self.outPath = outPath
+        self.outImgPath = outImgPath
+        self.outKeysPath = outKeysPath
 
     def henon1DOut(self, xIn, yIn, outLen, b = 1.4, c = 0.3):
         ret = []
@@ -66,12 +67,12 @@ class Encrypt:
             "okgm": okgmInitial,
             "akgm": akgmInitial
         }
-        with open('keys.txt', 'w+') as outfile:
+        with open(self.outKeysPath, 'w+') as outfile:
             json.dump(keys, outfile)
         # IF the outPath is using lossy compression, rather send out the text as is. 
         # with open('encrypteeFinal', 'w+') as encryptText:
         #     encryptText.write(str(self.image))
-        cv2.imwrite(self.outPath, self.image)
+        cv2.imwrite(self.outImgPath, self.image)
 
     def confusez3(self, img):
         n, m, _ = img.shape
@@ -102,13 +103,13 @@ class Encrypt:
         zigzagDirections = []
         for i in henonConfusion:
             if(0 <= i <= 63):
-                zigzagDirections.append("z1")
+                zigzagDirections.append("z3")
             elif(64 <= i <= 127):
-                zigzagDirections.append("z2")
+                zigzagDirections.append("z3")
             elif(128 <= i <= 191):
                 zigzagDirections.append("z3")
             elif(192 <= i <= 255):
-                zigzagDirections.append("z4")
+                zigzagDirections.append("z3")
         image = cv2.cvtColor(self.image, cv2.COLOR_RGB2BGR)
 
         for idx, i in enumerate(zigzagDirections):
@@ -238,5 +239,6 @@ class Encrypt:
         self.image = self.diffusion3(confusedImage, akgmInitial)
         self.out(okgmInitial, akgmInitial)
 
-encrypted = Encrypt("./lena.jpg", "./encrypted.png")
-encrypted.main()
+if __name__ == "__main__":
+    encrypted = Encrypt("./lena.jpg", "./encrypted.png", "./keys.txt")
+    encrypted.main()

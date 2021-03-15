@@ -124,9 +124,88 @@ class Decrypt:
         rPermute = self.getPermute(Keys, rCipher)
         return cv2.merge((bPermute, gPermute, rPermute))
 
+    def permuteHenon(self, l = 4, b = 1.4, c = 0.3):
+        xIn, yIn = float(self.keys["okgm"][0]), float(self.keys["okgm"][1])
+        ret = []
+        for iteration in range(l):
+            xNew = 1 - b * xIn * xIn + yIn
+            yNew = c * yIn
+            ret.append([xNew, yNew])
+            xIn, yIn = xNew, yNew
+        henonMap1d = list(zip(*ret))[0]
+        return list((255*(henonMap1d - np.min(henonMap1d))/np.ptp(henonMap1d)).astype(int))
+
+    def confusez3(self, img):
+        n, m, _ = img.shape
+        i = 0
+        visited = [[False for x in range(m)] for y in range(n)]
+        visited[0][0] = True
+        resImg = [img[0][0]]
+        x, y = 0, 0
+        while i < ((m * n) - 1):
+            i += 1
+            if (x-1) in range(0, m) and (y+1) in range(0, n) and visited[y+1][x-1] == False:
+                x = x - 1
+                y = y + 1
+            elif (x+1) in range(0, m) and (y-1) in range(0, n) and visited[y-1][x+1] == False:
+                x = x + 1
+                y = y - 1
+            elif x == 0 or x == m - 1:
+                y = y + 1
+            elif y == 0 or y == n - 1:
+                x = x + 1
+            visited[y][x] = True
+            resImg.append(img[y][x])
+        return resImg
+
+    def rConfusez3(self, img):
+        imageShape = (img.shape[0], img.shape[1], 1)
+        matBase = np.reshape(np.array(list(range(0, imageShape[0] * imageShape[1]))), imageShape)
+        confusedMatBase = self.confusez3(matBase) 
+        confusedMat = self.confusez3(img)
+        confusedBaseDict = {}
+        for i, e in enumerate(confusedMatBase):
+            confusedBaseDict[tuple(e[:])] = i
+
+        matToCheck = np.reshape(img, (img.shape[0] * img.shape[1], 3))
+        reverseScan = []
+        for i in range(imageShape[0] * imageShape[1]):
+            reverseScan.append(matToCheck[confusedBaseDict[tuple(np.array([i])[:])]])
+        # with open("reverseScan", "a+") as rScan:
+        #     rScan.write(str(reverseScan))
+        return np.array(reverseScan).reshape(img.shape)
+
+    def reverseConfusion(self, image, henonConfusion):
+        zigzagDirections = []
+        for i in henonConfusion:
+            if(0 <= i <= 63):
+                zigzagDirections.append("z3")
+            elif(64 <= i <= 127):
+                zigzagDirections.append("z3")
+            elif(128 <= i <= 191):
+                zigzagDirections.append("z3")
+            elif(192 <= i <= 255):
+                zigzagDirections.append("z3")
+
+        for idx, i in enumerate(zigzagDirections):
+            if i == "z1":
+                image = np.transpose(self.rConfusez3(image), (1, 0, 2))
+            elif i == "z2":
+                image = cv2.flip(np.transpose(self.rConfusez3(image), (1, 0, 2)), 1)
+            elif i == "z3":
+                image = self.rConfusez3(image)
+            elif i == "z4":
+                image = cv2.flip(self.rConfusez3(image), 0)
+            cv2.imwrite("./confusedD" + str(idx + 1) + ".png", image)
+        return image
+
     def main(self):
         permutedImage = self.reverseDiffusion3()
         cv2.imwrite("./permuted.png", permutedImage)
+        permuteHenonMap = self.permuteHenon()
+        decrypted = self.reverseConfusion(permutedImage, permuteHenonMap)
+        cv2.imwrite("./decrypted.png", decrypted)
 
-decrypt = Decrypt("./encrypted.png", "./keys.txt", "./decrypted.png")
-decrypt.main()
+if __name__ == "__main__":
+    decrypt = Decrypt("./encrypted.png", "./keys.txt", "./decrypted.png")
+    decrypt.main()
