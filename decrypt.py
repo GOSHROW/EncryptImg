@@ -158,50 +158,53 @@ class Decrypt:
             resImg.append(img[y][x])
         return resImg
 
-    def rConfusez3(self, img):
+    def rConfuse(self, img, zigzagDirection):
         imageShape = (img.shape[0], img.shape[1], 1)
         matBase = np.reshape(np.array(list(range(0, imageShape[0] * imageShape[1]))), imageShape)
-        confusedMatBase = self.confusez3(matBase) 
-        confusedMat = self.confusez3(img)
+        # confusedMatBase = self.confusez3(np.reshape(cv2.flip(matBase, 0), imageShape))
+        # print(matBase.shape, len(confusedMatBase))
+        
+        if zigzagDirection == "z1":
+            confusedMatBase = self.confusez3(np.transpose(matBase, (1, 0, 2)))
+        elif zigzagDirection == "z2":
+            confusedMatBase = self.confusez3(np.reshape(cv2.flip(np.transpose(matBase, (1, 0, 2)), 1), imageShape))
+        elif zigzagDirection == "z3":
+            confusedMatBase = self.confusez3(matBase)
+        elif zigzagDirection == "z4":
+            confusedMatBase = self.confusez3(np.reshape(cv2.flip(matBase, 0), imageShape))
+        
         confusedBaseDict = {}
         for i, e in enumerate(confusedMatBase):
             confusedBaseDict[tuple(e[:])] = i
 
-        matToCheck = np.reshape(img, (img.shape[0] * img.shape[1], 3))
+        matToCheck = np.reshape(img, (imageShape[0] * imageShape[1], 3))
         reverseScan = []
         for i in range(imageShape[0] * imageShape[1]):
             reverseScan.append(matToCheck[confusedBaseDict[tuple(np.array([i])[:])]])
         # with open("reverseScan", "a+") as rScan:
         #     rScan.write(str(reverseScan))
-        return np.array(reverseScan).reshape(img.shape)
+        return np.array(reverseScan).reshape((imageShape[0], imageShape[1], 3))
 
     def reverseConfusion(self, image, henonConfusion):
         zigzagDirections = []
-        for i in henonConfusion:
+        for i in henonConfusion[::-1]:
             if(0 <= i <= 63):
-                zigzagDirections.append("z3")
+                zigzagDirections.append("z1")
             elif(64 <= i <= 127):
-                zigzagDirections.append("z3")
+                zigzagDirections.append("z2")
             elif(128 <= i <= 191):
                 zigzagDirections.append("z3")
             elif(192 <= i <= 255):
-                zigzagDirections.append("z3")
+                zigzagDirections.append("z4")
 
         for idx, i in enumerate(zigzagDirections):
-            if i == "z1":
-                image = np.transpose(self.rConfusez3(image), (1, 0, 2))
-            elif i == "z2":
-                image = cv2.flip(np.transpose(self.rConfusez3(image), (1, 0, 2)), 1)
-            elif i == "z3":
-                image = self.rConfusez3(image)
-            elif i == "z4":
-                image = cv2.flip(self.rConfusez3(image), 0)
-            cv2.imwrite("./confusedD" + str(idx + 1) + ".png", image)
+            image = self.rConfuse(image, i)
+            # cv2.imwrite("./confusedD" + str(idx + 1) + ".png", image)
         return image
 
     def main(self):
         permutedImage = self.reverseDiffusion3()
-        cv2.imwrite("./permuted.png", permutedImage)
+        # cv2.imwrite("./permuted.png", permutedImage)
         permuteHenonMap = self.permuteHenon()
         decrypted = self.reverseConfusion(permutedImage, permuteHenonMap)
         cv2.imwrite("./decrypted.png", decrypted)

@@ -103,13 +103,13 @@ class Encrypt:
         zigzagDirections = []
         for i in henonConfusion:
             if(0 <= i <= 63):
-                zigzagDirections.append("z3")
+                zigzagDirections.append("z1")
             elif(64 <= i <= 127):
-                zigzagDirections.append("z3")
+                zigzagDirections.append("z2")
             elif(128 <= i <= 191):
                 zigzagDirections.append("z3")
             elif(192 <= i <= 255):
-                zigzagDirections.append("z3")
+                zigzagDirections.append("z4")
         image = cv2.cvtColor(self.image, cv2.COLOR_RGB2BGR)
 
         for idx, i in enumerate(zigzagDirections):
@@ -121,7 +121,7 @@ class Encrypt:
                 image = self.confusez3(image)
             elif i == "z4":
                 image = self.confusez3(cv2.flip(image, 0))
-            cv2.imwrite("./confused" + str(idx + 1) + ".png", image)
+            # cv2.imwrite("./confused" + str(idx + 1) + ".png", image)
         return image
     
     def henon2DOut(self, xIn, yIn, outLen, b = 1.4, c = 0.3):
