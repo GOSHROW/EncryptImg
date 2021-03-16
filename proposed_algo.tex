@@ -1,0 +1,49 @@
+\documentclass[a4paper]{article}
+
+\title{Algorithm for IBDBP}
+\author{Swapnil Ghosh}
+\date{\today}
+
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\begin{document}
+    \maketitle
+    \begin{algorithm}
+        \caption{3-Layer Inverse Diffusion with Internal Permutation}
+        \hspace*{\algorithmicindent}\textbf{Data: }\textit{cipher\textsubscript{bits}}, \textit{key\textsubscript{bits}} \\
+        \hspace*{\algorithmicindent}\textbf{Result: }\textit{permuted\textsubscript{bits}}
+        \begin{algorithmic}[1]
+            \Procedure{IBDBP}{$ci, ke$}       \Comment{Decrypts the diffusion of a matrix}
+                \For{\textit{q $=$ 1 to l}}   \Comment{Reverses Level 3 Diffusion}
+                    \For{\textit{d $=$ 1 to 8}}
+                        \If{\textit{d $\leq$ 4}}
+                            \State\texttt{b1\textsubscript{(q,d)} $=$ ci\textsubscript{(q,d+4)} $\oplus$ ke\textsubscript{(q,d)}}
+                        \Else
+                            \State\texttt{b1\textsubscript{(q,d)} $=$ ci\textsubscript{(q,d-4)} $\oplus$ ke\textsubscript{(q,d)}}
+                        \EndIf
+                    \EndFor
+                \EndFor
+                \For{\textit{q $=$ 1 to l}}   \Comment{Reverses Level 2 Diffusion}
+                    \For{\textit{d $=$ 1 to 8}}
+                        \If{\textit{d $=$ 1, 2, 5, 6}}
+                            \State\texttt{b2\textsubscript{(q,d)} $=$ b1\textsubscript{(q,d+2)} $\oplus$ ke\textsubscript{(q,d)}}
+                        \Else
+                            \State\texttt{b2\textsubscript{(q,d)} $=$ b1\textsubscript{(q,d-2)} $\oplus$ ke\textsubscript{(q,d)}}
+                        \EndIf
+                    \EndFor
+                \EndFor
+                \For{\textit{q $=$ 1 to l}}   \Comment{Reverses Level 1 Diffusion}
+                    \For{\textit{d $=$ 1 to 8}}
+                        \If{\textit{d $=$ odd number}}
+                            \State\texttt{per\textsubscript{(q,d)} $=$ b2\textsubscript{(q,d+1)} $\oplus$ ke\textsubscript{(q,d)}}
+                        \Else
+                            \State\texttt{per\textsubscript{(q,d)} $=$ b2\textsubscript{(q,d-1)} $\oplus$ ke\textsubscript{(q,d)}}
+                        \EndIf
+                    \EndFor
+                \EndFor
+                \State\Return{per}            \Comment{Permuted Bits returned as matrix}
+            \EndProcedure
+        \end{algorithmic}
+    \end{algorithm}
+\end{document}
