@@ -240,5 +240,5 @@ class Encrypt:
         self.out(okgmInitial, akgmInitial)
 
 if __name__ == "__main__":
-    encrypted = Encrypt("./lena.jpg", "./encrypted.png", "./keys.txt")
+    encrypted = Encrypt("./original.jpg", "./encrypted.png", "./keys.txt")
     encrypted.main()

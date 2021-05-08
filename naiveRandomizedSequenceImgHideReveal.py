@@ -91,5 +91,5 @@ def reveal(inResTextPath, hiddenImgPath, revealedImgPath, keysTextPath):
     cv2.imwrite(revealedImgPath, revealedImg)
 
 if __name__ == "__main__":
-    hide("./cover.jpg", "./encrypted.png", "./hidden.png", "./hiddenFileSize", "./keys.txt")
-    reveal("./hiddenFileSize", "./hidden.png", "./revealed.png", "./keys.txt")
+    hide("./cover.jpg", "./encrypted.png", "./hidden.png", "./hiddenFileSize.txt", "./keys.txt")
+    reveal("./hiddenFileSize.txt", "./hidden.png", "./revealed.png", "./keys.txt")
